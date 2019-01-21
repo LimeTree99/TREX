@@ -61,7 +61,7 @@ class TextInput:
         # dict for all the keycodes that could be usefull for commands
         self.com_codes = {'ctrl_s':False, 'ctrl_o':False, 'ctrl_shift_s':False,
                           'shift_down':False,'shift_up':False,'shift_left':False,
-                          'shift_right':False,'f5':False}
+                          'shift_right':False,'f5':False, 'alt_f4':False}
 
         # Things cursor:
         self.cursor_surface = pygame.Surface((int(self.font_size/20+1), self.font_size))
@@ -113,8 +113,7 @@ class TextInput:
                 elif (event.key == pl.K_UP and 
                       (pygame.key.get_mods() & pygame.KMOD_RSHIFT or
                       pygame.key.get_mods() & pygame.KMOD_LSHIFT)):
-                    print(8)
-                    
+
                     self.com_codes['shift_up'] = True
 
                 elif event.key == pl.K_DOWN and \
@@ -142,7 +141,12 @@ class TextInput:
                         self.com_codes['ctrl_o'] = True
 
                 elif event.key == pl.K_F5:
-                        self.com_codes['f5'] = True                        
+                        self.com_codes['f5'] = True
+
+                elif (event.key == pl.K_F4 and
+                      pygame.key.get_mods() & pygame.KMOD_ALT):
+
+                    self.com_codes['alt_f4'] = True
                 
                         
                 elif event.key == pl.K_DELETE:
@@ -193,7 +197,7 @@ class TextInput:
                 elif event.key == pl.K_UP:
                     if self.line_pointer > 0:
                         self.line_pointer -= 1
-                        
+
                     self.input_string = self.lines[self.line_pointer]
 
                 elif event.key == pl.K_DOWN:
@@ -262,14 +266,14 @@ class TextInput:
         return False
     
     def render(self,display, x, y):
-        for num, i in enumerate(self.lines): 
+        for num, i in enumerate(self.lines):
             surface = self.font_object.render(i, self.antialias, self.text_color)
-
+            
             
             if self.cursor_visible and num == self.line_pointer:
                 cursor_y_pos = self.font_object.size(self.input_string[:self.cursor_position])[0]
                 # Without this, the cursor is invisible when self.cursor_position > 0:
-                if self.cursor_position > 0:
+                if len(self.input_string) > 0 and self.cursor_position > 0:
                     cursor_y_pos -= self.cursor_surface.get_width()
                 surface.blit(self.cursor_surface, (cursor_y_pos, 0))
             

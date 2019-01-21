@@ -1,4 +1,5 @@
 import pygame
+from lib import pygame_textinput
 import tkinter as tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
@@ -21,78 +22,116 @@ class Message:
         self.display.blit(text, (self.width - w - 20, 20))
 
 
-inp = pygame_textinput.TextInput(font_family=font,
-                                 text_color=text_colour,
-                                 cursor_color=cursor_colour,
-                                 font_size=font_size)
-    
 
+def string_colour(string):
+    """
+    changes a string to a colour list
+    :param string: in form '(12,1,255)'
+    :return: colour (list)
+    """
+    pass
+
+def imp_comfig(fh):
+    """
+    :param fh: file open for reading
+    :return: dict of the configs
+    """
+    dict = {}
+    lines = fh.readlines()
+    for line in lines:
+        eq = line.index('=')
+        peram = line[:eq]
+
+        dict[peram] = add
       
 
-class main:
-    def __init__(self):
-        pygame_window.main.__init__(self,display, width, font, bg_colour)
+
+
+
+
+class Editor:
+    def __init__(self, display, width, settings):
+
+
         self.display = display
         self.width = width
-        self.font = font
-        self.message = Message(self.display, self.width, self.font)
+
         
-        self.background_colour = background_colour
         self.start_position = (10,3)
         self.position = [10,3]
         self.scrole_speed = 20
 
         self.file_name = None
-        self.run_command = 'python ' 
+        self.run_command = 'python '
+
+        # all settings imported in the settings dict
+        self.font = None
+        self.background_colour = None
+        self.text_colour = None
+        self.cursor_colour = None
+        self.font_size = None
+
+        self.load_settings(settings)
+
+        self.message = Message(self.display, self.width, self.font)
+
+        self.inp = pygame_textinput.TextInput(font_family=self.font,
+                                              text_color=self.text_colour,
+                                              cursor_color=self.cursor_colour,
+                                              font_size=self.font_size)
+
+
+    def load_settings(self, dict):
+        self.background_colour = dict['background_colour']
+        self.font = dict['font']
+        self.text_colour = dict['text_colour']
+        self.cursor_colour = dict['cursor_colour']
+        self.font_size = dict['font_size']
 
 
     def update(self, events):
         
-        inp.update(events)
-        inp.render(self.display, self.position[0], self.position[1])
+        self.inp.update(events)
+        self.inp.render(self.display, self.position[0], self.position[1])
         
         
-        if inp.com_codes['ctrl_s']:
-            self.save(inp.get_text())
-            inp.com_codes['ctrl_s'] = False
+        if self.inp.com_codes['ctrl_s']:
 
-        elif inp.com_codes['ctrl_shift_s']:
-            self.save_as(inp.get_text())
-            inp.com_codes['ctrl_shift_s'] = False
+            self.save(self.inp.get_text())
+            self.inp.com_codes['ctrl_s'] = False
 
-        elif inp.com_codes['ctrl_o']:
+        elif self.inp.com_codes['ctrl_shift_s']:
+            self.save_as(self.inp.get_text())
+            self.inp.com_codes['ctrl_shift_s'] = False
+
+        elif self.inp.com_codes['ctrl_o']:
             lines = self.open_file()
             if lines != None:
-                inp.set_text(lines)
-            inp.com_codes['ctrl_o'] = False
+                self.inp.set_text(lines)
+            self.inp.com_codes['ctrl_o'] = False
 
-        elif inp.com_codes['f5']:
+        elif self.inp.com_codes['f5']:
             # run
-            inp.cursor_position = 10
+            print('test')
+            self.inp.cursor_position = 10
             
-            inp.com_codes['f5'] = False
+            self.inp.com_codes['f5'] = False
 
-        elif inp.com_codes['shift_up']:
+        elif self.inp.com_codes['shift_up']:
             self.position[1] += self.scrole_speed
-            inp.com_codes['shift_up'] = False
+            self.inp.com_codes['shift_up'] = False
 
-        elif inp.com_codes['shift_down']:
+        elif self.inp.com_codes['shift_down']:
             self.position[1] -= self.scrole_speed
-            inp.com_codes['shift_down'] = False
+            self.inp.com_codes['shift_down'] = False
 
-        elif inp.com_codes['shift_right']:
+        elif self.inp.com_codes['shift_right']:
             self.position[0] += self.scrole_speed
-            inp.com_codes['shift_right'] = False
+            self.inp.com_codes['shift_right'] = False
 
-        elif inp.com_codes['shift_left']:
+        elif self.inp.com_codes['shift_left']:
             self.position[0] -= self.scrole_speed
-            inp.com_codes['shift_left'] = False
-
-    def message(self, message):
-        text = font.render("Hello, World", True, (0, 128, 0))
-        
-        rect = [self.width - window_len, 30, length, height]
-        
+            self.inp.com_codes['shift_left'] = False
 
     def save(self, lines):
         if self.file_name == None:
