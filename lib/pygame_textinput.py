@@ -9,6 +9,8 @@ import os.path
 import pygame
 import pygame.locals as pl
 
+from lib.addons import tab_num
+
 pygame.font.init()
 
 
@@ -27,13 +29,15 @@ class TextInput:
             text_color=(0, 0, 0),
             cursor_color=(0, 0, 1),
             repeat_keys_initial_ms=400,
-            repeat_keys_interval_ms=35):
+            repeat_keys_interval_ms=35,
+            tab_size=4,
+            auto_tab=False):
         """
         :param initial_string: Initial text to be displayed
         :param font_family: name or list of names for font (see pygame.font.match_font for precise format)
         :param font_size:  Size of font in pixels
         :param antialias: Determines if antialias is applied to font (uses more processing power)
-        :param text_color: Color of text (duh)
+        :param text_color: Color of text
         :param cursor_color: Color of cursor
         :param repeat_keys_initial_ms: Time in ms before keys are repeated when held
         :param repeat_keys_interval_ms: Interval between key press repetition when helpd
@@ -43,10 +47,11 @@ class TextInput:
         self.antialias = antialias
         self.text_color = text_color
         self.font_size = font_size
-        self.tab_size = 4
+        self.tab_size = tab_size
         self.input_string = initial_string  # Inputted text
         self.lines = [self.input_string]    # the list where all the lines are stored
-        self.line_pointer = 0               # points the the line that the curser is on                                                     
+        self.line_pointer = 0               # points the the line that the curser is on
+        self.auto_tab = auto_tab            # automatic python tab formatting
 
         if not os.path.isfile(font_family):
             font_family = pygame.font.match_font(font_family)
@@ -61,7 +66,8 @@ class TextInput:
         # dict for all the keycodes that could be usefull for commands
         self.com_codes = {'ctrl_s':False, 'ctrl_o':False, 'ctrl_shift_s':False,
                           'shift_down':False,'shift_up':False,'shift_left':False,
-                          'shift_right':False,'f5':False, 'alt_f4':False}
+                          'shift_right':False,'ctrl_down':False,'ctrl_up':False,'ctrl_left':False,
+                          'ctrl_right':False,'f5':False, 'alt_f4':False, 'alt_d':False}
 
         # Things cursor:
         self.cursor_surface = pygame.Surface((int(self.font_size/20+1), self.font_size))
@@ -78,9 +84,6 @@ class TextInput:
             if event.type == pygame.KEYDOWN:
                 self.cursor_visible = True  # So the user sees where he writes
 
-                for i in self.com_codes.keys():
-                    self.com_codes[i] = False
-
                 # If none exist, create counter for that key:
                 if event.key not in self.keyrepeat_counters:
                     self.keyrepeat_counters[event.key] = [0, event.unicode]
@@ -92,6 +95,12 @@ class TextInput:
                         self.lines.pop(self.line_pointer)
                         self.line_pointer -= 1
                         self.input_string = self.lines[self.line_pointer]
+                    elif self.input_string[:self.cursor_position].strip() == '' and (self.cursor_position) % 4 == 0 and self.cursor_position > 0 and self.auto_tab:
+                        self.input_string = self.input_string[self.tab_size:]
+                        self.cursor_position -= self.tab_size
+                    elif self.cursor_position > len(self.input_string):
+                        self.input_string = self.input_string[:-1]
+                        self.cursor_position = len(self.input_string)
                     else:
                         self.input_string = (
                             self.input_string[:max(self.cursor_position - 1, 0)]
@@ -99,6 +108,7 @@ class TextInput:
                         )
                         # Subtract one from cursor_pos, but do not go below zero:
                         self.cursor_position = max(self.cursor_position - 1, 0)
+
 
                 # for key codes
                 elif (event.key == pl.K_s and
@@ -147,10 +157,16 @@ class TextInput:
                       pygame.key.get_mods() & pygame.KMOD_ALT):
 
                     self.com_codes['alt_f4'] = True
+
+                elif (event.key == pl.K_d and
+                      pygame.key.get_mods() & pygame.KMOD_ALT):
+
+                    self.com_codes['alt_d'] = True
                 
                         
                 elif event.key == pl.K_DELETE:
-                    
+                    if self.cursor_position > len(self.input_string):
+                        self.cursor_position = len(self.input_string)
                     if (self.cursor_position == len(self.input_string) and
                         (self.line_pointer != len(self.lines) - 1)):
                         
@@ -168,9 +184,12 @@ class TextInput:
                     self.lines.insert(self.line_pointer +1, self.input_string[self.cursor_position:])
                     self.lines[self.line_pointer] = self.lines[self.line_pointer][:self.cursor_position]
 
-                    self.cursor_position = 0
-                    self.line_pointer += 1                       
-                    self.input_string = self.lines[self.line_pointer]
+                    tabs = tab_num(self.lines, self.tab_size, self.line_pointer) * self.tab_size
+
+                    self.cursor_position = tabs
+                    self.line_pointer += 1
+
+                    self.input_string = (tabs * ' ') + self.lines[self.line_pointer]
 
                 elif event.key == pl.K_RIGHT:
                     if self.line_pointer != len(self.lines) - 1 or \
@@ -198,13 +217,18 @@ class TextInput:
                     if self.line_pointer > 0:
                         self.line_pointer -= 1
 
+
                     self.input_string = self.lines[self.line_pointer]
 
                 elif event.key == pl.K_DOWN:
                     if self.line_pointer < len(self.lines) - 1:
                         self.line_pointer += 1
+                        self.input_string = self.lines[self.line_pointer]
+                    elif self.line_pointer == len(self.lines) - 1:
+
+                        self.cursor_position = len(self.input_string)
                         
-                    self.input_string = self.lines[self.line_pointer]
+
 
                 elif event.key == pl.K_END:
                     self.cursor_position = len(self.input_string)

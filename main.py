@@ -1,35 +1,24 @@
-import os
-import subprocess
-import tkinter as tk
-from tkinter.filedialog import asksaveasfilename, askopenfilename
-
-import pygame
-from lib import pygame_window, addons
-
-from lib import pygame_textinput
-from lib.classes import Message, Editor
+from lib import pygame_window
+from lib.classes import Message, Editor, Text
+from lib.addons import tab_num
 
 #print(asksaveasfilename().help())
-
-# variables will be imported from a file in the future
-settings = {'font': "Courier New", 'font_size': 24, 'background_colour': (0,0,0),
-            'text_colour': (255,255,255), 'cursor_colour': (255,255,255)}
-
-# file variables
-defalt_path = os.path.abspath("""C:/Users/verdon/Documents/art""")
-
-# init classes
 
 class main(pygame_window.main):
     def __init__(self):
         pygame_window.main.__init__(self, 800, 500, "TREXT")
         self.message = Message(self.display, self.width, "Courier New")
 
-        self.edit = Editor(self.display, self.width, settings)
+
+        self.edit = Editor(self.display, self.width, 'config.txt')
         self.background_colour = self.edit.background_colour
+        self.run_window = Text(self.display, self.edit.font)
 
     def update(self):
+        #print(self.edit.inp.cursor_position)
         self.edit.update(self.events)
+        if self.edit.show_runwindow:
+            self.run_window.update([400,10,100,100], ['the','thing'])
         
 
 

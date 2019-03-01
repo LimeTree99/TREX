@@ -110,44 +110,6 @@ class timer:
         
             
 
-class Sprite(collide):
-    """requiors the use of w, s, d, a on the keyboard"""
-
-    def __init__(self, display, colour, x, y, walls=None):
-        collide.__init__(self)
-        self.display = display
-        self.colour = colour
-        self.x = x
-        self.y = y
-        self.walllist=walls
-        self.dx = 5
-        self.dy = 5
-        self.width = 50
-        self.height = 50
-
-    def draw(self, keydict):
-        
-        pygame.draw.rect(self.display, self.colour,
-                         [self.x, self.y, self.width, self.height])
-
-        self.update(keydict)
-
-    def update(self, keydict):
-
-        x_buffer = self.x
-        y_buffer = self.y
-
-        if keydict['w'] == True:
-            y_buffer -= self.dy
-
-        if keydict['s'] == True:
-            y_buffer += self.dy
-        if keydict['a'] == True:
-            x_buffer -= self.dx
-        if keydict['d'] == True:
-            x_buffer += self.dx
-
-
         x_walls = collide.check_against(self, [self.x, y_buffer, self.width, self.height])
         y_walls = collide.check_against(self, [x_buffer, self.y, self.width, self.height])
 
@@ -158,9 +120,27 @@ class Sprite(collide):
             self.x = x_buffer
             
 
+def space_at_start(string):
+    count = 0
+    while count < len(string) and string[count] == ' ':
+        count += 1
+    return count
 
+def tab_num(lines, tab_size, line):
+    '''
+    lines: the lines (lis)
+    tab_size: size of tab (int)
+    line: the line index (int)
+    
+    returns the number of tabs that a line should have
+    '''
+    tab = space_at_start(lines[line]) // tab_size
 
-
+    if len(lines[line].strip()) > 0:
+        if lines[line].strip()[-1] == ':':
+            tab += 1
+    return tab
+        
 
 
 

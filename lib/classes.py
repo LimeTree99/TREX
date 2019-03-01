@@ -22,27 +22,83 @@ class Message:
         self.display.blit(text, (self.width - w - 20, 20))
 
 
+class Text:
+    def __init__(self, display, font, font_colour=(255,255,255),
+                 bg_colour=(255,255,255), size=36):
+        self.display = display
+        self.font = font
+        self.font_colour = font_colour
+        self.bg_colour = bg_colour
+        self.size = size
+        self.font = pygame.font.SysFont(self.font, self.size)
 
-def string_colour(string):
-    """
-    changes a string to a colour list
-    :param string: in form '(12,1,255)'
-    :return: colour (list)
-    """
-    pass
+    def update(self, rect, lines):
+        pygame.draw.rect(self.display, self.bg_colour, rect, 1)
+        for line in lines:
+            text = self.font.render(line, True, self.font_colour)
+            self.display.blit(text, (rect[0], ))
 
-def imp_comfig(fh):
-    """
-    :param fh: file open for reading
-    :return: dict of the configs
-    """
-    dict = {}
-    lines = fh.readlines()
-    for line in lines:
-        eq = line.index('=')
-        peram = line[:eq]
 
-        dict[peram] = add
+
+class fh_pull:
+    def string_colour(string):
+        """
+        changes a string to a colour list
+        :param string: in form '(12,1,255)'
+        :return: colour (list)
+        """
+        string = string[1:-1]
+        colour = string.split(',')
+        for i in range(len(colour)):
+            colour[i] = int(colour[i].strip())
+        return colour
+
+    def split_line(file):
+        """
+        splits a file into a list with the title and what it holds
+        :param fh: file open for reading
+        :return: lis
+        """
+        fh = open(file, 'r')
+        lis = []
+        lines = fh.readlines()
+        fh.close()
+        for line in lines:
+            strip = line.strip()
+            if strip != '':
+                if strip[0] != '#':
+                    chunk = line.split('=')
+                    for i in range(len(chunk)):
+                        chunk[i] = chunk[i].strip()
+
+                    lis.append(chunk)
+
+        return lis
+
+
+    def imp_config(file):
+        """
+        :param fh: file open for reading
+        :return: dict of the configs
+        """
+        dict = {}
+        lines = fh_pull.split_line(file)
+
+        for line in lines:
+            peram = line[0]
+            if line[1][0] == '(' or line[1][0] == '[':
+                add = fh_pull.string_colour(line[1])
+            elif line[1][0].isdigit():
+                add = int(line[1])
+            elif line[0][1] == 'true' or line[0][1] == 'True':
+                add = True
+            elif line[0][1] == 'false' or line[0][1] == 'False':
+                add = False
+            else:
+                add = line[1]
+
+            dict[peram] = add
+        return dict
       
 
 
@@ -50,7 +106,7 @@ def imp_comfig(fh):
 
 
 class Editor:
-    def __init__(self, display, width, settings):
+    def __init__(self, display, width, settings_file):
 
 
         self.display = display
@@ -60,8 +116,8 @@ class Editor:
         self.start_position = (10,3)
         self.position = [10,3]
         self.scrole_speed = 20
+        self.show_runwindow = False
 
-        self.file_name = None
         self.run_command = 'python '
 
         # all settings imported in the settings dict
@@ -70,23 +126,30 @@ class Editor:
         self.text_colour = None
         self.cursor_colour = None
         self.font_size = None
+        self.tab_size = None
+        self.auto_tab = None
 
-        self.load_settings(settings)
+        self.load_settings(settings_file)
 
         self.message = Message(self.display, self.width, self.font)
 
         self.inp = pygame_textinput.TextInput(font_family=self.font,
                                               text_color=self.text_colour,
                                               cursor_color=self.cursor_colour,
-                                              font_size=self.font_size)
+                                              font_size=self.font_size,
+                                              tab_size=self.tab_size,
+                                              auto_tab=self.auto_tab)
 
 
-    def load_settings(self, dict):
-        self.background_colour = dict['background_colour']
-        self.font = dict['font']
-        self.text_colour = dict['text_colour']
-        self.cursor_colour = dict['cursor_colour']
-        self.font_size = dict['font_size']
+    def load_settings(self, file):
+        dic = fh_pull.imp_config(file)
+        self.background_colour = dic['background_colour']
+        self.font = dic['font']
+        self.text_colour = dic['text_colour']
+        self.cursor_colour = dic['cursor_colour']
+        self.font_size = dic['font_size']
+        self.tab_size = dic['tab_size']
+        self.auto_tab = dic['auto_tab']
 
 
     def update(self, events):
@@ -111,10 +174,9 @@ class Editor:
             self.inp.com_codes['ctrl_o'] = False
 
         elif self.inp.com_codes['f5']:
+            #self.show_runwindow = True
             # run
             print('test')
-            self.inp.cursor_position = 10
-            
             self.inp.com_codes['f5'] = False
 
         elif self.inp.com_codes['shift_up']:
@@ -132,6 +194,14 @@ class Editor:
         elif self.inp.com_codes['shift_left']:
             self.position[0] -= self.scrole_speed
             self.inp.com_codes['shift_left'] = False
+
+        elif self.inp.com_codes['alt_d']:
+            #shows and hides the run window
+            if self.show_runwindow:
+                self.show_runwindow = False
+            else:
+                self.show_runwindow = True
+            self.inp.com_codes['alt_d'] = False
 
     def save(self, lines):
         if self.file_name == None:
@@ -158,6 +228,7 @@ class Editor:
             lines = None
             self.file_name = None
         return lines
+
     def save_as(self, lines):
         root = tk.Tk()
         root.withdraw()

@@ -10,7 +10,7 @@ class main:
                  height,
                  window_name,
                  corner_image = os.path.split(__file__)[0] + '/images/flower_corner_image.png',
-                 framerate = 60):
+                 framerate = 20):
         
         self.width = width
         self.height = height
